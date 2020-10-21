@@ -9,32 +9,50 @@ public class PlayerMouvement : MonoBehaviour
     private bool isJumping;
     private bool isGrounded;
 
-    public Transform groundCheckLeft;
-    public Transform groundCheckRight;
+    public Transform groundCheck;
+    public float groundCheckRadius = 2;
+    public LayerMask collisionLayers;
+
     public Animator animator;
     public SpriteRenderer spriteRenderer;
 
 
     public Rigidbody2D rb;
     private Vector3 velocity = Vector3.zero;
+    
 
-    void FixedUpdate()
+    void Update()
     {
-        // La position au sol est déterminé par une ligne entre ces 2 positions, qui sont 
-        isGrounded = Physics2D.OverlapArea(groundCheckLeft.position, groundCheckRight.position);
-        float horizontalMovement = Input.GetAxis("Horizontal") * moveSpeed * Time.deltaTime;
+        // Update doit s'occuper de tous les calculs, l'impact graphique se fera dans FixedUpdate
         
         if (Input.GetButtonDown("Jump") && isGrounded)
         {
             isJumping = true;
         }
-        
-        MovePlayer(horizontalMovement);
+
+        FlipPlayer(rb.velocity.x);
 
         float vitesse = Mathf.Abs(rb.velocity.x);
-        FlipPlayer(rb.velocity.x);
         animator.SetFloat("Speed", vitesse);
-    
+
+    }
+
+    void CheckPlayerEstAuSol()
+    { 
+            // La position au sol est déterminé par une ligne entre ces 2 positions, qui sont 
+        isGrounded = Physics2D.OverlapCircle (groundCheck.position, groundCheckRadius, collisionLayers); 
+    }
+
+
+    void FixedUpdate()
+    {
+        //La gestion du mouvement doit se faire dans FixedUpdate, sinon il y aura des latences
+        float horizontalMovement = Input.GetAxis("Horizontal") * moveSpeed * Time.deltaTime;
+        
+        CheckPlayerEstAuSol();
+
+        MovePlayer(horizontalMovement);
+
     }
 
     void FlipPlayer(float _vitesse)
@@ -62,6 +80,13 @@ public class PlayerMouvement : MonoBehaviour
             isJumping = false;
         }
 
+    }
+
+    private void OnDrawGizmos()
+    {
+        Gizmos.color = Color.red;
+        //permet de tracer un cercle vide de centre et et de rayon
+        Gizmos.DrawWireSphere(groundCheck.position, groundCheckRadius);
     }
 
 
