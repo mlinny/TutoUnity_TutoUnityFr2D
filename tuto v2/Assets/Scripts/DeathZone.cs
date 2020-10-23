@@ -6,6 +6,7 @@ public class DeathZone : MonoBehaviour
 
     private Transform playerSpawn;
     private Animator fadeSystem;
+    private int deathZoneDamage = 10;
 
     private void Awake()
     {
@@ -18,7 +19,14 @@ public class DeathZone : MonoBehaviour
         if (collision.CompareTag("Player"))
         {
             StartCoroutine(GetBackToSpawn(collision));
+
         }
+    }
+
+    private void PerformDamage(Collider2D collision)
+    {
+        PlayerHealth health = collision.transform.GetComponent<PlayerHealth>();
+        health.TakeDamage(deathZoneDamage);
     }
 
 
@@ -27,7 +35,10 @@ public class DeathZone : MonoBehaviour
 
         fadeSystem.SetTrigger("FadeIn");
         yield return new WaitForSeconds(1f);
-        collision.transform.position = playerSpawn.position; 
+        collision.transform.position = playerSpawn.position;
+        PerformDamage(collision);
+
+
     }
 
 
