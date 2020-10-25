@@ -10,7 +10,9 @@ public class DeathZone : MonoBehaviour
 
     private void Awake()
     {
+        Debug.Log("Chargement du playerSpawn");
         playerSpawn = GameObject.FindGameObjectWithTag("PlayerSpawn").transform;
+        Debug.Log("Chargement du FadeSystem");
         fadeSystem = GameObject.FindGameObjectWithTag("FadeSystem").GetComponent<Animator>();
     }
 

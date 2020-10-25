@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 
 
 public class PlayerMouvement : MonoBehaviour
@@ -8,6 +9,8 @@ public class PlayerMouvement : MonoBehaviour
 
     private bool isJumping;
     private bool isGrounded;
+    [HideInInspector]
+    public bool isClimbing;
 
     public Transform groundCheck;
     public float groundCheckRadius = 2;
@@ -19,12 +22,12 @@ public class PlayerMouvement : MonoBehaviour
 
     public Rigidbody2D rb;
     private Vector3 velocity = Vector3.zero;
-    
+
 
     void Update()
     {
         // Update doit s'occuper de tous les calculs, l'impact graphique se fera dans FixedUpdate
-        
+
         if (Input.GetButtonDown("Jump") && isGrounded)
         {
             isJumping = true;
@@ -34,13 +37,14 @@ public class PlayerMouvement : MonoBehaviour
 
         float vitesse = Mathf.Abs(rb.velocity.x);
         animator.SetFloat("Speed", vitesse);
+        animator.SetBool("IsClimbing", isClimbing);
 
     }
 
     void CheckPlayerEstAuSol()
-    { 
-            // La position au sol est déterminé par une ligne entre ces 2 positions, qui sont 
-        isGrounded = Physics2D.OverlapCircle (groundCheck.position, groundCheckRadius, collisionLayers); 
+    {
+        // La position au sol est déterminé par une ligne entre ces 2 positions, qui sont 
+        isGrounded = Physics2D.OverlapCircle(groundCheck.position, groundCheckRadius, collisionLayers);
     }
 
 
@@ -48,16 +52,17 @@ public class PlayerMouvement : MonoBehaviour
     {
         //La gestion du mouvement doit se faire dans FixedUpdate, sinon il y aura des latences
         float horizontalMovement = Input.GetAxis("Horizontal") * moveSpeed * Time.deltaTime;
-        
+        float verticalMovement = Input.GetAxis("Vertical") * moveSpeed * Time.deltaTime;
+
         CheckPlayerEstAuSol();
 
-        MovePlayer(horizontalMovement);
+        MovePlayer(horizontalMovement, verticalMovement );
 
     }
 
     void FlipPlayer(float _vitesse)
     {
-        
+
         if (_vitesse > 0.1F)
         {
             spriteRenderer.flipX = false;
@@ -69,17 +74,37 @@ public class PlayerMouvement : MonoBehaviour
     }
 
 
-    void MovePlayer(float _horizontalMovement)
+    void MovePlayer(float _horizontalMovement, float _verticalMovement)
+    {
+
+        if (!isClimbing)
+        {
+            PerformDeplacementHorizontal(_horizontalMovement);
+        }
+        else
+        {
+            PerformDeplacementVertical(_verticalMovement );
+        }
+
+    }
+
+    private void PerformDeplacementVertical(float verticalMovement)
+    {
+        // le 0 permet de s'accrocher à l'échelle
+        Vector3 targetVelocity = new Vector2( 0, verticalMovement);
+        rb.velocity = Vector3.SmoothDamp(rb.velocity, targetVelocity, ref velocity, 0.05f);
+    }
+
+    private void PerformDeplacementHorizontal(float _horizontalMovement)
     {
         Vector3 targetVelocity = new Vector2(_horizontalMovement, rb.velocity.y);
         rb.velocity = Vector3.SmoothDamp(rb.velocity, targetVelocity, ref velocity, 0.05f);
 
-        if (isJumping == true)
+        if (isJumping)
         {
             rb.AddForce(new Vector2(0f, jumpForce));
             isJumping = false;
         }
-
     }
 
     private void OnDrawGizmos()
